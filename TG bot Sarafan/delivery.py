@@ -1,6 +1,6 @@
 from telegram import Update
 from telegram.ext import CallbackContext, ConversationHandler, CommandHandler, MessageHandler, Filters
-# from database import create_connection, insert_order, close_connection
+from database import create_connection, insert_order, close_connection
 from sendmessage import send_message_to_admin
 
 NAME, SURNAME, PHONE, FOOD = range(4)
@@ -34,12 +34,12 @@ def get_food(update: Update, context: CallbackContext) -> int:
 
 def save_order_to_db(context: CallbackContext):
     # Сохранение информации о заказе в базе данных
-    # conn = create_connection()
+    conn = create_connection()
     name = context.user_data['name']
     surname = context.user_data['surname']
     phone = context.user_data['phone']
     food = context.user_data['food']
     order = (name, surname, phone, food)
-    # insert_order(conn, order)
+    insert_order(conn, order)
     send_message_to_admin(context) # Отправка информации администратору
-    # close_connection(conn)
+    close_connection(conn)
