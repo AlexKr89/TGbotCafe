@@ -20,7 +20,7 @@ def show_event(update: Update, context: CallbackContext) -> None:
 
 def show_contacts(update: Update, context: CallbackContext) -> None:
     update.callback_query.message.reply_text(
-        "Контакты: тел. +7 (918) 253 45 42",
+        "Контакты: тел. +7**********",
     )
 
 def button(update: Update, context: CallbackContext) -> None:
@@ -36,7 +36,7 @@ def button(update: Update, context: CallbackContext) -> None:
     elif query.data == 'order':
         return start_delivery(update, context)
     elif query.data == 'call_contact':
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Свяжитесь с нами по номеру +7 (918) 253 45 42")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Свяжитесь с нами по номеру +7 **********")
 
 def main_menu_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
@@ -49,18 +49,18 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
 
 def menu_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Основные блюда", url='https://sarafan-cafe.ru/#Main')],
-        [InlineKeyboardButton("Завтраки", url='https://sarafan-cafe.ru/#Breakfast')],
-        [InlineKeyboardButton("Закуски", url='https://sarafan-cafe.ru/#Snacks')],
-        [InlineKeyboardButton("Салаты", url='https://sarafan-cafe.ru/#Salads')],
-        [InlineKeyboardButton("Детское меню", url='https://sarafan-cafe.ru/#Children')],
-        [InlineKeyboardButton("Сезонное меню", url='https://sarafan-cafe.ru/#Season')]
+        [InlineKeyboardButton("Основные блюда", url='https://#Main')],
+        [InlineKeyboardButton("Завтраки", url='https://#Breakfast')],
+        [InlineKeyboardButton("Закуски", url='https://#Snacks')],
+        [InlineKeyboardButton("Салаты", url='https://#Salads')],
+        [InlineKeyboardButton("Детское меню", url='https://#Children')],
+        [InlineKeyboardButton("Сезонное меню", url='https://#Season')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def event_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("Регистрация на мероприятие", url='https://sarafan-cafe.ru/page31019388.html')],
+        [InlineKeyboardButton("Регистрация на мероприятие", url='https://page31019388.html')],
     ]
     return InlineKeyboardMarkup(keyboard)
 
