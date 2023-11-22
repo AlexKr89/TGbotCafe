@@ -5,7 +5,7 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# Создайте класс обработчика событий
+# Создание класса обработчика событий
 class FileChangeHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path == 'sarafan_bot.db':
@@ -21,7 +21,7 @@ def process_changes():
     else: 
         print("Невозможно подключиться к базе данных")
 
-# Создайте экземпляр класса Observer
+# Создание экземпляра класса Observer
 observer = Observer()
 
 def create_connection():
