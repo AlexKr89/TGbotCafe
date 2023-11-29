@@ -1,7 +1,6 @@
-# database.py
 import sqlite3
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 DATABASE_URI = 'sqlite:///subscriptions.db'
 
@@ -10,13 +9,15 @@ engine = create_engine(DATABASE_URI, echo=True)
 conn = engine.connect()
 
 # Создание таблицы подписок, если она не существует
-conn.execute('''
+create_table_query = text('''
 CREATE TABLE IF NOT EXISTS subscriptions (
     chat_id INTEGER,
     event_name TEXT,
     PRIMARY KEY (chat_id, event_name)
 );
 ''')
+
+conn.execute(create_table_query)
 
 # Загрузка мероприятий из XLS файла
 events_df = pd.read_excel('events.xlsx')
