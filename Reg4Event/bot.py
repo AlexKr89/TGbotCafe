@@ -1,4 +1,3 @@
-# bot.py
 import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
@@ -18,6 +17,10 @@ dispatcher = updater.dispatcher
 # Обработка команд
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
+
+def events(update: Update, context: CallbackContext) -> None:
+    event_list = "\n".join(events_df['event_name'])
+    update.message.reply_text(f"Доступные мероприятия:\n{event_list}")
 
 events_handler = CommandHandler('events', events)
 dispatcher.add_handler(events_handler)
