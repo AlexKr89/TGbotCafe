@@ -12,6 +12,10 @@ SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
+    if not events:
+        update.message.reply_text("Нет доступных мероприятий.")
+        return ConversationHandler.END
+
     message = "Доступные мероприятия:\n"
     for event_name, event_date, event_time in events:
         formatted_date = event_date.strftime("%d.%m.%Y")
