@@ -1,4 +1,3 @@
-# bot.py
 from datetime import datetime, time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
@@ -15,7 +14,6 @@ def start(update: Update, context: CallbackContext) -> int:
     message = "Доступные мероприятия:\n"
     for event_name, event_date, event_time in events:
         formatted_date = event_date.strftime("%d.%m.%Y")
-        event_time = datetime.strptime(event_time.strip(), "%H:%M").time()
         formatted_time = event_time.strftime("%H:%M")
         message += f"{event_name}: {formatted_date} {formatted_time}\n"
 
