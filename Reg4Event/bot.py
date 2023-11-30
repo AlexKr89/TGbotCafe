@@ -64,6 +64,9 @@ def user_info(update: Update, context: CallbackContext) -> int:
     formatted_time = event[2].strftime("%H:%M")
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
 
+    # Сохраняем данные о записи в базу данных
+    db.save_registration(event[0], event[1], event[2], user_info)
+
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
 
