@@ -27,5 +27,4 @@ class Database:
         cursor.execute('SELECT DISTINCT event_name, event_date, event_time FROM registrations')
         events = cursor.fetchall()
         conn.close()
-        print("Events from database:", events)
         return events
