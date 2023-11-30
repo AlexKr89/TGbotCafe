@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from config import TOKEN
 from database import events_df, subscribe, export_csv, start
+import pandas as pd
 
 # Настройки бота
 DATABASE_URI = 'sqlite:///subscriptions.db'
@@ -19,31 +20,29 @@ start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
 
 def events(update: Update, context: CallbackContext) -> None:
-    keyboard = []
-
-    # Проверка наличия столбца 'event_date'
-    if 'event_date' not in events_df.columns:
-        update.message.reply_text("Столбец 'event_date' не существует в DataFrame.")
+    # Проверка наличия столбцов 'event_name' и 'event_date'
+    if 'event_name' not in events_df.columns or 'event_date' not in events_df.columns:
+        update.message.reply_text("Столбцы 'event_name' и 'event_date' должны существовать в DataFrame.")
         return
 
+    # Создание клавиатуры с одной кнопкой "Записаться" для каждого мероприятия
+    keyboard = []
     for index, row in events_df.iterrows():
         event_name = row['event_name']
-        event_date = row['event_date']
+        event_date = row['event_date'].strftime('%Y-%m-%d %H:%M') if not pd.isnull(row['event_date']) else 'Нет данных'
 
-        # Отображение event_date и кнопки "Записаться"
-        text = f"{event_name}\nДата: {event_date}"
-        button = InlineKeyboardButton("Записаться", callback_data=f"subscribe_{index}")
+        # Отображение event_name, event_date и одной кнопки "Записаться"
+        text = f"{event_name}\nДата и время: {event_date}"
+        button = InlineKeyboardButton(text="Записаться", callback_data=f"subscribe_{index}_{event_name}_{event_date}")
         keyboard.append([button])
-
-    # Создание клавиатуры с кнопками
-    reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Улучшенный вывод информации о мероприятиях
     if not events_df.empty:
-        update.message.reply_text("Доступные мероприятия:")
-        for index, row in events_df.iterrows():
-            event_info = f"{row['event_name']} ({row['event_date']})"
-            update.message.reply_text(event_info, reply_markup=reply_markup)
+        # Создание клавиатуры с использованием InlineKeyboardMarkup
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Отправка сообщения с клавиатурой
+        update.message.reply_text("Доступные мероприятия:", reply_markup=reply_markup)
     else:
         update.message.reply_text("Нет доступных мероприятий.")
 
