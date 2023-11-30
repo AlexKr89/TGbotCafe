@@ -1,60 +1,26 @@
-import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from config import TOKEN
-from database import events_df, subscribe, export_csv, start
+from database import Database
 
-# Настройки бота
-DATABASE_URI = 'sqlite:///subscriptions.db'
+# Загружаем токен и создаем экземпляр Database
+db = Database('events.xlsx')
 
-# Настройки логгирования
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+def start(update: Update, context: CallbackContext) -> None:
+    events = db.get_events()
+    message = "Доступные мероприятия:\n"
+    for event_name, event_date in events:
+        message += f"{event_name}: {event_date}\n"
+    update.message.reply_text(message)
 
-# Инициализация бота и базы данных
-updater = Updater(token=TOKEN, use_context=True)
-dispatcher = updater.dispatcher
+def main():
+    updater = Updater(TOKEN)
+    dp = updater.dispatcher
 
-# Обработка команд
-start_handler = CommandHandler('start', start)
-dispatcher.add_handler(start_handler)
+    dp.add_handler(CommandHandler("start", start))
 
-def events(update: Update, context: CallbackContext) -> None:
-    # Проверка наличия столбца 'event_date'
-    if 'event_date' not in events_df.columns:
-        update.message.reply_text("Столбец 'event_date' не существует в DataFrame.")
-        return
+    updater.start_polling()
+    updater.idle()
 
-    # Создание клавиатуры с одной кнопкой "Записаться" для каждого мероприятия
-    keyboard = []
-
-    for index, row in events_df.iterrows():
-        event_name = row['event_name']
-        event_date = row['event_date']
-
-        # Отображение event_name, event_date и одной кнопки "Записаться"
-        text = f"{event_name}\nДата: {event_date}"
-        button = InlineKeyboardButton("Записаться", callback_data=f"subscribe_{index}")
-        keyboard.append([text, button])
-
-    # Создание клавиатуры с использованием InlineKeyboardMarkup
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    # Улучшенный вывод информации о мероприятиях
-    if not events_df.empty:
-        # Отправка сообщения с клавиатурой
-        update.message.reply_text("Доступные мероприятия:", reply_markup=reply_markup)
-    else:
-        update.message.reply_text("Нет доступных мероприятий.")
-
-events_handler = CommandHandler('events', events)
-dispatcher.add_handler(events_handler)
-
-subscribe_handler = CommandHandler('subscribe', subscribe, pass_args=True)
-dispatcher.add_handler(subscribe_handler)
-
-export_csv_handler = CommandHandler('export_csv', export_csv)
-dispatcher.add_handler(export_csv_handler)
-
-# Запуск бота
-updater.start_polling()
-updater.idle()
+if __name__ == '__main__':
+    main()
