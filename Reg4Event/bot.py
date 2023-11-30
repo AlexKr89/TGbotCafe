@@ -1,6 +1,7 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext
+import pandas as pd
 from config import TOKEN
 from database import events_df, subscribe, export_csv, start
 
