@@ -2,7 +2,7 @@ import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from config import TOKEN
-from database import events_df, subscribe, export_csv, start
+from database import events_df, subscribe, export_csv, start  # Импортируем функцию start из модуля database
 
 # Настройки бота
 DATABASE_URI = 'sqlite:///subscriptions.db'
