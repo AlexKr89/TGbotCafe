@@ -28,7 +28,7 @@ def events(update: Update, context: CallbackContext) -> None:
     keyboard = []
     for index, row in events_df.iterrows():
         event_name = row['event_name']
-        event_date = row['event_date']
+        event_date = row['event_date'].strftime('%Y-%m-%d')  # Форматирование даты
 
         # Отображение event_date и кнопки "Записаться"
         text = f"{event_name}\nДата: {event_date}"
