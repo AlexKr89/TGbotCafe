@@ -7,8 +7,12 @@ import os
 DATABASE_URI = 'sqlite:///subscriptions.db'
 
 # Загрузка мероприятий из XLS файла
-filepath = os.path.join('D:', 'Work', 'Git', 'Reg4Event', 'events.xlsx')
-events_df = pd.read_excel(filepath, engine='openpyxl')
+filepath = os.path.abspath('D:\\Work\\Git\\Reg4Event\\events.xlsx')
+
+if os.path.exists(filepath):
+    events_df = pd.read_excel(filepath, engine='openpyxl')
+else:
+    print(f"Файл {filepath} не существует.")
 
 
 # Инициализация базы данных
