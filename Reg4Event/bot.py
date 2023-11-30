@@ -1,9 +1,9 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext
-import pandas as pd
 from config import TOKEN
 from database import events_df, subscribe, export_csv, start
+import pandas as pd
 
 # Настройки бота
 DATABASE_URI = 'sqlite:///subscriptions.db'
@@ -34,7 +34,7 @@ def events(update: Update, context: CallbackContext) -> None:
         # Отображение event_name, event_date и кнопки "Записаться"
         text = f"{event_name}\nДата: {event_date}"
         button = InlineKeyboardButton("Записаться", callback_data=f"subscribe_{index}")
-        keyboard.append([button])
+        keyboard.append([text, button])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
