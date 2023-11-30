@@ -33,7 +33,7 @@ def events(update: Update, context: CallbackContext) -> None:
 
         # Отображение event_name, event_date и кнопки "Записаться"
         text = f"{event_name}\nДата: {event_date}"
-        button = InlineKeyboardButton(text="Записаться", callback_data=f"subscribe_{index}")
+        button = InlineKeyboardButton(text="Записаться", callback_data=f"subscribe_{index}_{event_name}_{event_date}")
         keyboard.append([button])
 
     # Улучшенный вывод информации о мероприятиях
