@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 conn.execute(create_table_query)
 
 # Загрузка мероприятий из XLS файла
-events_df = pd.read_excel('events.xlsx', engine='openpyxl')
+events_df = pd.read_excel('/D:/Work/Git/Reg4Event/events.xlsx', engine='openpyxl')
 
 def subscribe(update, context):
     chat_id = update.message.chat_id
