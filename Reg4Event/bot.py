@@ -33,16 +33,15 @@ def events(update: Update, context: CallbackContext) -> None:
 
         # Отображение event_name, event_date и кнопки "Записаться"
         text = f"{event_name}\nДата: {event_date}"
-        button = InlineKeyboardButton("Записаться", callback_data=f"subscribe_{index}")
-        keyboard.append([text, button])
+        button = InlineKeyboardButton(text="Записаться", callback_data=f"subscribe_{index}")
+        keyboard.append([button])
 
     # Улучшенный вывод информации о мероприятиях
     if not events_df.empty:
-        # Создание клавиатуры с использованием InlineKeyboardMarkup
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
         # Отправка сообщения с клавиатурой
-        update.message.reply_text("Доступные мероприятия:", reply_markup=reply_markup)
+        update.message.reply_text("Доступные мероприятия:")
+        for row in keyboard:
+            update.message.reply_text(reply_markup=InlineKeyboardMarkup([row]))
     else:
         update.message.reply_text("Нет доступных мероприятий.")
 
