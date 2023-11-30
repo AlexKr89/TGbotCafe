@@ -21,6 +21,11 @@ dispatcher.add_handler(start_handler)
 def events(update: Update, context: CallbackContext) -> None:
     keyboard = []
 
+    # Проверка наличия столбца 'event_date'
+    if 'event_date' not in events_df.columns:
+        update.message.reply_text("Столбец 'event_date' не существует в DataFrame.")
+        return
+
     for index, row in events_df.iterrows():
         event_name = row['event_name']
         event_date = row['event_date']
@@ -28,12 +33,19 @@ def events(update: Update, context: CallbackContext) -> None:
         # Отображение event_date и кнопки "Записаться"
         text = f"{event_name}\nДата: {event_date}"
         button = InlineKeyboardButton("Записаться", callback_data=f"subscribe_{index}")
-        keyboard.append([text, button])
+        keyboard.append([button])
 
     # Создание клавиатуры с кнопками
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    update.message.reply_text("Доступные мероприятия:", reply_markup=reply_markup)
+    # Улучшенный вывод информации о мероприятиях
+    if not events_df.empty:
+        update.message.reply_text("Доступные мероприятия:")
+        for index, row in events_df.iterrows():
+            event_info = f"{row['event_name']} ({row['event_date']})"
+            update.message.reply_text(event_info, reply_markup=reply_markup)
+    else:
+        update.message.reply_text("Нет доступных мероприятий.")
 
 events_handler = CommandHandler('events', events)
 dispatcher.add_handler(events_handler)
