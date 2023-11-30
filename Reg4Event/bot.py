@@ -1,8 +1,7 @@
 import logging
-from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from config import TOKEN
-from database import events_df, subscribe, export_csv, start  # Импортируем функцию start из модуля database
+from database import events_df, subscribe, export_csv, start
 
 # Настройки бота
 DATABASE_URI = 'sqlite:///subscriptions.db'
@@ -18,7 +17,7 @@ dispatcher = updater.dispatcher
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
 
-def events(update: Update, context: CallbackContext) -> None:
+def events(update, context):
     event_list = "\n".join(events_df['event_name'])
     update.message.reply_text(f"Доступные мероприятия:\n{event_list}")
 
