@@ -29,10 +29,10 @@ def events(update: Update, context: CallbackContext) -> None:
     keyboard = []
     for index, row in events_df.iterrows():
         event_name = row['event_name']
-        event_date = row['event_date'].strftime('%Y-%m-%d') if not pd.isnull(row['event_date']) else 'Нет данных'
+        event_date = row['event_date'].strftime('%Y-%m-%d %H:%M') if not pd.isnull(row['event_date']) else 'Нет данных'
 
         # Отображение event_name, event_date и кнопки "Записаться"
-        text = f"{event_name}\nДата: {event_date}"
+        text = f"{event_name}\nДата и время: {event_date}"
         button = InlineKeyboardButton(text="Записаться", callback_data=f"subscribe_{index}_{event_name}_{event_date}")
         keyboard.append([button])
 
@@ -58,4 +58,3 @@ dispatcher.add_handler(export_csv_handler)
 # Запуск бота
 updater.start_polling()
 updater.idle()
-
