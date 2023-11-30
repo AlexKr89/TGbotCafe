@@ -1,5 +1,4 @@
-# bot.py
-from datetime import datetime
+from datetime import datetime, time
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from config import TOKEN
@@ -11,9 +10,10 @@ db = Database('events.xlsx')
 def start(update: Update, context: CallbackContext) -> None:
     events = db.get_events()
     message = "Доступные мероприятия:\n"
-    for event_name, event_date in events:
+    for event_name, event_date, event_time in events:
         formatted_date = event_date.strftime("%d.%m.%Y")
-        message += f"{event_name}: {formatted_date}\n"
+        formatted_time = event_time.strftime("%H:%M")
+        message += f"{event_name}: {formatted_date} {formatted_time}\n"
     update.message.reply_text(message)
 
 def main():
