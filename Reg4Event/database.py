@@ -1,4 +1,3 @@
-# database.py
 import sqlite3
 from datetime import datetime
 
@@ -29,13 +28,3 @@ class Database:
         events = cursor.fetchall()
         conn.close()
         return events
-
-    def save_registration(self, event_name, event_date, event_time, user_info):
-        conn = sqlite3.connect(self.db_filename)
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO registrations (event_name, event_date, event_time, user_info)
-            VALUES (?, ?, ?, ?)
-        ''', (event_name, event_date, event_time, user_info))
-        conn.commit()
-        conn.close()
