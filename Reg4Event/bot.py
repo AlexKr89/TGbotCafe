@@ -33,8 +33,9 @@ def events(update: Update, context: CallbackContext) -> None:
 
         # Отображение event_name, event_date и одной кнопки "Записаться"
         text = f"{event_name}\nДата и время: {event_date}"
-        button = InlineKeyboardButton(text="Записаться", callback_data=f"subscribe_{index}_{event_name}_{event_date}")
-        keyboard.append([button])
+        button = [InlineKeyboardButton(text="Записаться", callback_data=f"subscribe_{index}_{event_name}_{event_date}")]
+        keyboard.append([text])
+        keyboard.extend(button)
 
     # Улучшенный вывод информации о мероприятиях
     if not events_df.empty:
