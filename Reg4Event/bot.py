@@ -1,35 +1,46 @@
-import logging
-from telegram.ext import Updater, CommandHandler, CallbackContext
-from config import TOKEN
-from database import events_df, subscribe, export_csv, start
+# database.py
+import sqlite3
+import pandas as pd
+from sqlalchemy import create_engine, text
 
-# Настройки бота
 DATABASE_URI = 'sqlite:///subscriptions.db'
 
-# Настройки логгирования
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# Инициализация базы данных
+engine = create_engine(DATABASE_URI, echo=True)
+conn = engine.connect()
 
-# Инициализация бота и базы данных
-updater = Updater(token=TOKEN, use_context=True)
-dispatcher = updater.dispatcher
+# Создание таблицы подписок, если она не существует
+create_table_query = text('''
+CREATE TABLE IF NOT EXISTS subscriptions (
+    chat_id INTEGER,
+    event_name TEXT,
+    PRIMARY KEY (chat_id, event_name)
+);
+''')
 
-# Обработка команд
-start_handler = CommandHandler('start', start)
-dispatcher.add_handler(start_handler)
+conn.execute(create_table_query)
 
-def events(update, context):
-    event_list = "\n".join(events_df['event_name'])
-    update.message.reply_text(f"Доступные мероприятия:\n{event_list}")
+# Загрузка мероприятий из XLS файла
+events_df = pd.read_excel('events.xlsx', engine='openpyxl')
 
-events_handler = CommandHandler('events', events)
-dispatcher.add_handler(events_handler)
+def subscribe(update, context):
+    chat_id = update.message.chat_id
+    event_name = context.args[0]
 
-subscribe_handler = CommandHandler('subscribe', subscribe, pass_args=True)
-dispatcher.add_handler(subscribe_handler)
+    # Проверка наличия мероприятия
+    if event_name not in events_df['event_name'].values:
+        update.message.reply_text(f"Мероприятия {event_name} не существует.")
+        return
 
-export_csv_handler = CommandHandler('export_csv', export_csv)
-dispatcher.add_handler(export_csv_handler)
+    # Подписка пользователя
+    conn.execute('INSERT OR IGNORE INTO subscriptions (chat_id, event_name) VALUES (?, ?)', (chat_id, event_name))
+    update.message.reply_text(f"Вы подписались на мероприятие {event_name}.")
 
-# Запуск бота
-updater.start_polling()
-updater.idle()
+def export_csv(update, context):
+    df = pd.read_sql('SELECT * FROM subscriptions', engine)
+    df.to_csv('subscriptions.csv', index=False)
+    update.message.reply_text("Экспорт подписок в CSV завершен.")
+
+def start(update, context):
+    update.message.reply_text('Привет! Этот бот предоставляет информацию о мероприятиях. '
+                              'Используйте /events, чтобы увидеть доступные мероприятия.')
