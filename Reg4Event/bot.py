@@ -20,9 +20,9 @@ start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
 
 def events(update: Update, context: CallbackContext) -> None:
-    # Проверка наличия столбца 'event_date'
-    if 'event_date' not in events_df.columns:
-        update.message.reply_text("Столбец 'event_date' не существует в DataFrame.")
+    # Проверка наличия столбцов 'event_name' и 'event_date'
+    if 'event_name' not in events_df.columns or 'event_date' not in events_df.columns:
+        update.message.reply_text("Столбцы 'event_name' и 'event_date' должны существовать в DataFrame.")
         return
 
     # Создание клавиатуры с кнопками
@@ -34,7 +34,7 @@ def events(update: Update, context: CallbackContext) -> None:
         # Отображение event_name, event_date и кнопки "Записаться"
         text = f"{event_name}\nДата: {event_date}"
         button = InlineKeyboardButton("Записаться", callback_data=f"subscribe_{index}")
-        keyboard.append([button])
+        keyboard.append([text, button])
 
     # Улучшенный вывод информации о мероприятиях
     if not events_df.empty:
