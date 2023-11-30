@@ -54,3 +54,4 @@ def export_csv(update, context):
 def start(update, context):
     update.message.reply_text('Привет! Этот бот предоставляет информацию о мероприятиях. '
                               'Используйте /events, чтобы увидеть доступные мероприятия.')
+print(events_df.head())
