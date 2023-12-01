@@ -6,7 +6,7 @@ from config import TOKEN
 from database import Database
 
 # Загружаем токен и создаем экземпляр Database
-db = Database('events.xlsx')
+db = Database('registration.db')
 
 SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 
