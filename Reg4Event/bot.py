@@ -74,7 +74,10 @@ def user_info(update: Update, context: CallbackContext) -> int:
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event['event_name']} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
 
     # Сохраняем данные о регистрации в базу данных
-    db.save_registration(context.user_data['selected_event'], user_info)
+    registration_id = db.save_registration(context.user_data['selected_event'], user_info)
+
+    # Печатаем идентификатор записи в консоль
+    print(f"Создана запись в базе данных с идентификатором: {registration_id}")
 
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
