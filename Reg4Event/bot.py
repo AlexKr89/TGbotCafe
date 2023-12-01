@@ -1,12 +1,10 @@
-# bot.py
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 from config import TOKEN
 from database import Database
 import pandas as pd
-from pandas.api.types import is_datetime64_any_dtype as is_datetime
+from pandas.api.types import is_datetime64_any_dtype
 
-# Загружаем токен и создаем экземпляр Database
 db = Database('registration.db', 'events.xlsx')
 
 SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
@@ -14,13 +12,23 @@ SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
     message = "Доступные мероприятия:\n"
-    for event in events:
+    for _, event in events.iterrows():
         event_name = event['event_name']
-        event_date = event['event_date'].strftime("%d.%m.%Y") if not pd.isnat(event['event_date']) else "Нет данных о дате"
-        event_time = event['event_time'].strftime("%H:%M") if not pd.isnat(event['event_time']) else "Нет данных о времени"
+        
+        # Check if 'event_date' and 'event_time' columns are datetime64 dtype
+        if is_datetime64_any_dtype(event['event_date']):
+            event_date = event['event_date'].strftime("%d.%m.%Y")
+        else:
+            event_date = "Нет данных о дате"
+
+        if is_datetime64_any_dtype(event['event_time']):
+            event_time = event['event_time'].strftime("%H:%M")
+        else:
+            event_time = "Нет данных о времени"
+
         message += f"{event_name}: {event_date} {event_time}\n"
 
-    keyboard = [[InlineKeyboardButton(event['event_name'], callback_data=str(event['id'])) for event in events.itertuples(index=False)]]
+    keyboard = [[InlineKeyboardButton(event['event_name'], callback_data=str(event['id'])) for _, event in events.iterrows()]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     update.message.reply_text(message, reply_markup=reply_markup)
