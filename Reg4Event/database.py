@@ -32,15 +32,15 @@ class Database:
         conn.close()
 
     def load_events(self):
-        events = pd.read_excel(self.events_filename)
         conn = sqlite3.connect(self.db_filename)
+        events = pd.read_excel(self.events_filename)
         events.to_sql('events', conn, index=False, if_exists='replace')
         conn.close()
 
     def get_events(self):
         conn = sqlite3.connect(self.db_filename)
-        query = 'SELECT id, event_name, event_date, event_time FROM events'
-        events = pd.read_sql(query, conn)
+        query = 'SELECT event_name, event_date, event_time FROM events'
+        events = pd.read_sql_query(query, conn)
         conn.close()
         return events
 
