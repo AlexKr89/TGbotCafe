@@ -1,12 +1,13 @@
 # database.py
 import sqlite3
-from datetime import datetime
+import pandas as pd
 
 class Database:
     def __init__(self, db_filename, events_filename):
         self.db_filename = db_filename
         self.events_filename = events_filename
         self.create_tables()
+        self.load_events()
 
     def create_tables(self):
         conn = sqlite3.connect(self.db_filename)
@@ -31,22 +32,15 @@ class Database:
         conn.close()
 
     def load_events(self):
-        wb = openpyxl.load_workbook(self.events_filename)
-        sheet = wb.active
-        events = [(row[0], row[1], row[2]) for row in sheet.iter_rows(min_row=2, values_only=True) if row[0] and row[1] and row[2]]
-        wb.close()
-
+        events = pd.read_excel(self.events_filename)
         conn = sqlite3.connect(self.db_filename)
-        cursor = conn.cursor()
-        cursor.executemany('INSERT INTO events (event_name, event_date, event_time) VALUES (?, ?, ?)', events)
-        conn.commit()
+        events.to_sql('events', conn, index=False, if_exists='replace')
         conn.close()
 
     def get_events(self):
         conn = sqlite3.connect(self.db_filename)
-        cursor = conn.cursor()
-        cursor.execute('SELECT id, event_name, event_date, event_time FROM events')
-        events = cursor.fetchall()
+        query = 'SELECT id, event_name, event_date, event_time FROM events'
+        events = pd.read_sql(query, conn)
         conn.close()
         return events
 
