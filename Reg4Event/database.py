@@ -1,30 +1,13 @@
-import sqlite3
-from datetime import datetime
+# database.py
+import openpyxl
 
 class Database:
-    def __init__(self, db_filename):
-        self.db_filename = db_filename
-        self.create_tables()
-
-    def create_tables(self):
-        conn = sqlite3.connect(self.db_filename)
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS registrations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                event_name TEXT NOT NULL,
-                event_date DATE NOT NULL,
-                event_time TIME NOT NULL,
-                user_info TEXT NOT NULL
-            )
-        ''')
-        conn.commit()
-        conn.close()
+    def __init__(self, filename):
+        self.filename = filename
 
     def get_events(self):
-        conn = sqlite3.connect(self.db_filename)
-        cursor = conn.cursor()
-        cursor.execute('SELECT DISTINCT event_name, event_date, event_time FROM registrations')
-        events = cursor.fetchall()
-        conn.close()
+        wb = openpyxl.load_workbook(self.filename)
+        sheet = wb.active
+        events = [(row[0], row[1], row[2]) for row in sheet.iter_rows(min_row=2, values_only=True) if row[0] and row[1] and row[2]]
+        wb.close()
         return events
