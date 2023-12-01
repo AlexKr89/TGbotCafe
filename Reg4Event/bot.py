@@ -1,21 +1,20 @@
 # bot.py
 from datetime import datetime, time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, CallbackContext, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 from config import TOKEN
 from database import Database
 
 # Загружаем токен и создаем экземпляр Database
 db = Database('events.xlsx')
 
-SELECT_EVENT, CONFIRMATION = range(2)
+SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
     message = "Доступные мероприятия:\n"
     for event_name, event_date, event_time in events:
         formatted_date = event_date.strftime("%d.%m.%Y")
-        event_time = datetime.strptime(event_time.strip(), "%H:%M").time()
         formatted_time = event_time.strftime("%H:%M")
         message += f"{event_name}: {formatted_date} {formatted_time}\n"
 
@@ -46,11 +45,22 @@ def confirmation(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
 
     if user_choice == 'yes':
-        # Здесь можно добавить логику для записи пользователя на мероприятие
-        query.edit_message_text(f"Вы успешно записаны на мероприятие {event[0]}!")
+        query.edit_message_text("Для успешной записи, введите следующие данные:\nИмя, Фамилию, Контактный телефон")
+        return USER_INFO
     else:
         query.edit_message_text("Вы отменили запись на мероприятие.")
+        return ConversationHandler.END
 
+def user_info(update: Update, context: CallbackContext) -> int:
+    user_info = update.message.text
+    context.user_data['user_info'] = user_info
+
+    event = db.get_events()[context.user_data['selected_event']]
+    formatted_date = event[1].strftime("%d.%m.%Y")
+    formatted_time = event[2].strftime("%H:%M")
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
+
+    update.message.reply_text(confirmation_message)
     return ConversationHandler.END
 
 def main():
@@ -61,7 +71,8 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             SELECT_EVENT: [CallbackQueryHandler(select_event)],
-            CONFIRMATION: [CallbackQueryHandler(confirmation)]
+            CONFIRMATION: [CallbackQueryHandler(confirmation)],
+            USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)]
         },
         fallbacks=[],
         allow_reentry=True
