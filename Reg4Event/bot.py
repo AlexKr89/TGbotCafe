@@ -18,7 +18,7 @@ def start(update: Update, context: CallbackContext) -> int:
         formatted_time = event['event_time'].strftime("%H:%M")
         message += f"{event['event_name']}: {formatted_date} {formatted_time}\n"
 
-    keyboard = [[InlineKeyboardButton(event['event_name'], callback_data=str(event['id'])) for _, event in events.iterrows()]]
+    keyboard = [[InlineKeyboardButton(event['event_name'], callback_data=str(index)) for index, event in events.iterrows()]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     update.message.reply_text(message, reply_markup=reply_markup)

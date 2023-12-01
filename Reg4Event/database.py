@@ -45,8 +45,8 @@ class Database:
         # Преобразование столбцов event_date и event_time
         events['event_date'] = pd.to_datetime(events['event_date'])
         
-        # Обработка столбца 'event_time'
-        events['event_time'] = pd.to_datetime(events['event_time'], errors='coerce')
+        # Уточнение формата времени в столбце 'event_time'
+        events['event_time'] = pd.to_datetime(events['event_time'], format='%H:%M', errors='coerce')
         events['event_time'] = events['event_time'].dt.time
 
         conn.close()
@@ -55,6 +55,7 @@ class Database:
     def save_registration(self, event_id, user_info):
         conn = sqlite3.connect(self.db_filename)
         cursor = conn.cursor()
+        # Извлекаем значение из индекса вместо 'id'
         cursor.execute('INSERT INTO registrations (event_id, user_info) VALUES (?, ?)', (event_id, user_info))
         conn.commit()
         conn.close()
