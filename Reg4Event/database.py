@@ -41,6 +41,10 @@ class Database:
         conn = sqlite3.connect(self.db_filename)
         query = 'SELECT event_name, event_date, event_time FROM events'
         events = pd.read_sql_query(query, conn)
+
+        # Преобразование столбца event_date в формат datetime
+        events['event_date'] = pd.to_datetime(events['event_date'])
+
         conn.close()
         return events
 
