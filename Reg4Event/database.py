@@ -44,7 +44,10 @@ class Database:
 
         # Преобразование столбцов event_date и event_time
         events['event_date'] = pd.to_datetime(events['event_date'])
-        events['event_time'] = pd.to_datetime(events['event_time'], format='%H:%M:%S').dt.time
+        
+        # Обработка столбца 'event_time'
+        events['event_time'] = pd.to_datetime(events['event_time'], errors='coerce')
+        events['event_time'] = events['event_time'].dt.time
 
         conn.close()
         return events
