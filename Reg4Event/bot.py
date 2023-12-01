@@ -4,6 +4,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, ConversationH
 from config import TOKEN
 from database import Database
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
 # Загружаем токен и создаем экземпляр Database
 db = Database('registration.db', 'events.xlsx')
@@ -13,12 +14,13 @@ SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
     message = "Доступные мероприятия:\n"
-    for _, event in events.iterrows():
-        formatted_date = event['event_date'].strftime("%d.%m.%Y")
-        formatted_time = event['event_time'].strftime("%H:%M")
-        message += f"{event['event_name']}: {formatted_date} {formatted_time}\n"
+    for event in events:
+        event_name = event['event_name']
+        event_date = event['event_date'].strftime("%d.%m.%Y") if not pd.isnat(event['event_date']) else "Нет данных о дате"
+        event_time = event['event_time'].strftime("%H:%M") if not pd.isnat(event['event_time']) else "Нет данных о времени"
+        message += f"{event_name}: {event_date} {event_time}\n"
 
-    keyboard = [[InlineKeyboardButton(event['event_name'], callback_data=str(index)) for index, event in events.iterrows()]]
+    keyboard = [[InlineKeyboardButton(event['event_name'], callback_data=str(event['id'])) for event in events.itertuples(index=False)]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     update.message.reply_text(message, reply_markup=reply_markup)
@@ -29,7 +31,10 @@ def select_event(update: Update, context: CallbackContext) -> int:
     context.user_data['selected_event'] = int(query.data)
     event = db.get_events().loc[context.user_data['selected_event']]
     formatted_date = event['event_date'].strftime("%d.%m.%Y")
-    formatted_time = event['event_time'].strftime("%H:%M") if not pd.isna(event['event_time']) and not pd.isnat(event['event_time']) else "Нет данных о времени"
+
+    formatted_time = event['event_time'].strftime("%H:%M") if not pd.isnat(event['event_time']) else "Нет данных о времени"
+
+
     confirmation_message = f"Вы хотите записаться на мероприятие:\n{event['event_name']} - {formatted_date} {formatted_time}?"
 
     keyboard = [[InlineKeyboardButton("Да", callback_data='yes'),
