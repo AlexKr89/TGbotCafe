@@ -29,7 +29,7 @@ def select_event(update: Update, context: CallbackContext) -> int:
     context.user_data['selected_event'] = int(query.data)
     event = db.get_events().loc[context.user_data['selected_event']]
     formatted_date = event['event_date'].strftime("%d.%m.%Y")
-    formatted_time = event['event_time'].strftime("%H:%M")
+    formatted_time = event['event_time'].strftime("%H:%M") if not pd.isna(event['event_time']) else "Нет данных о времени"
     confirmation_message = f"Вы хотите записаться на мероприятие:\n{event['event_name']} - {formatted_date} {formatted_time}?"
 
     keyboard = [[InlineKeyboardButton("Да", callback_data='yes'),
