@@ -6,16 +6,12 @@ from config import TOKEN
 from database import Database
 
 # Загружаем токен и создаем экземпляр Database
-db = Database('registration.db')
+db = Database('events.xlsx')
 
 SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
-    if not events:
-        update.message.reply_text("Нет доступных мероприятий.")
-        return ConversationHandler.END
-
     message = "Доступные мероприятия:\n"
     for event_name, event_date, event_time in events:
         formatted_date = event_date.strftime("%d.%m.%Y")
@@ -63,9 +59,6 @@ def user_info(update: Update, context: CallbackContext) -> int:
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
-
-    # Сохраняем данные о записи в базу данных
-    db.save_registration(event[0], event[1], event[2], user_info)
 
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
