@@ -1,9 +1,9 @@
 # bot.py
-from datetime import datetime, time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 from config import TOKEN
 from database import Database
+import pandas as pd
 
 # Загружаем токен и создаем экземпляр Database
 db = Database('registration.db', 'events.xlsx')
@@ -13,12 +13,12 @@ SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
     message = "Доступные мероприятия:\n"
-    for event_name, event_date, event_time in events:
-        formatted_date = event_date.strftime("%d.%m.%Y")
-        formatted_time = event_time.strftime("%H:%M")
-        message += f"{event_name}: {formatted_date} {formatted_time}\n"
+    for _, event in events.iterrows():
+        formatted_date = event['event_date'].strftime("%d.%m.%Y")
+        formatted_time = event['event_time'].strftime("%H:%M")
+        message += f"{event['event_name']}: {formatted_date} {formatted_time}\n"
 
-    keyboard = [[InlineKeyboardButton(event[0], callback_data=str(events.index(event))) for event in events]]
+    keyboard = [[InlineKeyboardButton(event['event_name'], callback_data=str(event['id'])) for _, event in events.iterrows()]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     update.message.reply_text(message, reply_markup=reply_markup)
@@ -27,10 +27,10 @@ def start(update: Update, context: CallbackContext) -> int:
 def select_event(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     context.user_data['selected_event'] = int(query.data)
-    event = db.get_events()[context.user_data['selected_event']]
-    formatted_date = event[1].strftime("%d.%m.%Y")
-    formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы хотите записаться на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}?"
+    event = db.get_events().loc[context.user_data['selected_event']]
+    formatted_date = event['event_date'].strftime("%d.%m.%Y")
+    formatted_time = event['event_time'].strftime("%H:%M")
+    confirmation_message = f"Вы хотите записаться на мероприятие:\n{event['event_name']} - {formatted_date} {formatted_time}?"
 
     keyboard = [[InlineKeyboardButton("Да", callback_data='yes'),
                  InlineKeyboardButton("Нет", callback_data='no')]]
@@ -42,7 +42,7 @@ def select_event(update: Update, context: CallbackContext) -> int:
 def confirmation(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     user_choice = query.data
-    event = db.get_events()[context.user_data['selected_event']]
+    event = db.get_events().loc[context.user_data['selected_event']]
 
     if user_choice == 'yes':
         query.edit_message_text("Для успешной записи, введите следующие данные:\nФИО, Контактный телефон")
@@ -55,10 +55,13 @@ def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
 
-    event = db.get_events()[context.user_data['selected_event']]
-    formatted_date = event[1].strftime("%d.%m.%Y")
-    formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
+    event = db.get_events().loc[context.user_data['selected_event']]
+    formatted_date = event['event_date'].strftime("%d.%m.%Y")
+    formatted_time = event['event_time'].strftime("%H:%M")
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event['event_name']} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
+
+    # Сохраняем данные о регистрации в базу данных
+    db.save_registration(context.user_data['selected_event'], user_info)
 
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
