@@ -45,7 +45,7 @@ def confirmation(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
 
     if user_choice == 'yes':
-        query.edit_message_text("Для успешной записи, введите следующие данные:\nИмя, Фамилию, Контактный телефон")
+        query.edit_message_text("Для успешной записи, введите следующие данные:\nФИО, Контактный телефон")
         return USER_INFO
     else:
         query.edit_message_text("Вы отменили запись на мероприятие.")
