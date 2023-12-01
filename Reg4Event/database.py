@@ -42,8 +42,9 @@ class Database:
         query = 'SELECT event_name, event_date, event_time FROM events'
         events = pd.read_sql_query(query, conn)
 
-        # Преобразование столбца event_date в формат datetime
+        # Преобразование столбцов event_date и event_time
         events['event_date'] = pd.to_datetime(events['event_date'])
+        events['event_time'] = pd.to_datetime(events['event_time'], format='%H:%M:%S').dt.time
 
         conn.close()
         return events
