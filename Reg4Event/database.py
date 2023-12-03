@@ -17,12 +17,12 @@ class RegistrationDatabase:
     def __init__(self, filename):
         self.filename = filename
 
-    def save_registration(self, event_name, user_info, user_phone=None):
+    def save_registration(self, event_name, user_info):
         wb = openpyxl.load_workbook(self.filename)
         sheet = wb.active
 
-        # Добавляем user_info, user_phone и текущую метку времени в строку
-        registration_data = [user_info, user_phone, datetime.now()]
+        # Добавляем user_info и текущую метку времени в строку
+        registration_data = [user_info, datetime.now()]
         sheet.append([event_name, *registration_data])
 
         wb.save(self.filename)
