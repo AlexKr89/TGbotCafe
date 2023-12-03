@@ -1,5 +1,4 @@
-# bot.py
-from datetime import datetime, time
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 from config import TOKEN
@@ -39,51 +38,10 @@ def select_event(update: Update, context: CallbackContext) -> int:
     query.edit_message_text(confirmation_message, reply_markup=reply_markup)
     return CONFIRMATION
 
-def confirmation(update: Update, context: CallbackContext) -> int:
-    query = update.callback_query
-    user_choice = query.data
-    event = db.get_events()[context.user_data['selected_event']]
-
-    if user_choice == 'yes':
-        # Предлагаем ввести ФИО
-        query.edit_message_text("Для успешной записи, введите следующие данные:\nФИО")
-        return USER_INFO
-    else:
-        query.edit_message_text("Вы отменили запись на мероприятие.")
-        return ConversationHandler.END
-
-def enter_phone(update: Update, context: CallbackContext) -> int:
-    # Обработка ввода номера телефона
-    if update.message:
-        context.user_data['user_phone'] = update.message.text
-        event = db.get_events()[context.user_data['selected_event']]
-        formatted_date = event[1].strftime("%d.%m.%Y")
-        formatted_time = event[2].strftime("%H:%M")
-        confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data.get('user_info', '')}\nНомер телефона: {context.user_data.get('user_phone', '')}"
-
-        # Сохраняем данные о регистрации в базу данных
-        registration_db.save_registration(event[0], f"{context.user_data.get('user_info', '')}, {context.user_data.get('user_phone', '')}")
-
-        context.bot.send_message(update.effective_chat.id, confirmation_message)
-        return ConversationHandler.END
-    else:
-        # Если update.message - None, значит, пришел callback_query
-        query = update.callback_query
-        query.answer()
-        return USER_PHONE
-
 def user_info(update: Update, context: CallbackContext) -> int:
     # Обработка ввода ФИО
     user_info = update.message.text
     context.user_data['user_info'] = user_info
-
-    event = db.get_events()[context.user_data['selected_event']]
-    formatted_date = event[1].strftime("%d.%m.%Y")
-    formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
-
-    # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], user_info)
 
     # Предложим ввести номер телефона
     keyboard = [[InlineKeyboardButton("Продолжить", callback_data='continue')]]
@@ -93,16 +51,37 @@ def user_info(update: Update, context: CallbackContext) -> int:
     return USER_PHONE
 
 def continue_registration(update: Update, context: CallbackContext) -> int:
-    # Продолжение ввода номера телефона
-    return enter_phone(update, context)
+    query = update.callback_query
+    query.answer()
+
+    # Проверяем, является ли обновлением от callback_query или message
+    if update.message:
+        user_phone = update.message.text
+    else:
+        # Если обновление пришло от callback_query, то используем информацию из контекста
+        user_phone = context.user_data.get('user_phone', '')
+
+    # Сохраняем данные о регистрации в базу данных
+    event = db.get_events()[context.user_data['selected_event']]
+    formatted_date = event[1].strftime("%d.%m.%Y")
+    formatted_time = event[2].strftime("%H:%M")
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_info']}\nНомер телефона: {user_phone}"
+
+    registration_db.save_registration(event[0], f"{context.user_data['user_info']}, {user_phone}")
+
+    context.bot.send_message(update.effective_chat.id, confirmation_message)
+
+    return ConversationHandler.END
+
 
 def test_registration(update: Update, context: CallbackContext) -> None:
     # Эта функция предназначена только для тестирования процесса регистрации
     event_name = "Танцы"  # Замените на реальное имя события
-    user_info = "Пупа Лупа, 89182547412"  # Замените на реальную информацию о пользователе
+    user_info = "Пупа Лупа"  # Замените на реальную информацию о пользователе
+    user_phone = "89182547412"  # Замените на реальный номер телефона
 
     # Сохраняем регистрацию
-    registration_db.save_registration(event_name, user_info)
+    registration_db.save_registration(event_name, f"{user_info}, {user_phone}")
 
     update.message.reply_text("Тестирование регистрации завершено!")
 
@@ -114,9 +93,9 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             SELECT_EVENT: [CallbackQueryHandler(select_event)],
-            CONFIRMATION: [CallbackQueryHandler(confirmation)],
+            CONFIRMATION: [CallbackQueryHandler(continue_registration)],
             USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)],
-            USER_PHONE: [CallbackQueryHandler(continue_registration)]
+            USER_PHONE: [MessageHandler(Filters.text & ~Filters.command, continue_registration)]
         },
         fallbacks=[],
         allow_reentry=True
