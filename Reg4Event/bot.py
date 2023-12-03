@@ -53,17 +53,20 @@ def confirmation(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
 def enter_phone(update: Update, context: CallbackContext) -> int:
-    context.user_data['user_phone'] = update.message.text
+    user_info = context.user_data.get('user_info', '')  # Получаем ФИО из данных пользователя
+    user_phone = update.message.text
+    context.user_data['user_phone'] = user_phone
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_info']}\nНомер телефона: {context.user_data['user_phone']}"
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {user_info}\nНомер телефона: {user_phone}"
 
     # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], f"{context.user_data['user_info']}, {context.user_data['user_phone']}")
+    registration_db.save_registration(event[0], f"{user_info}, {user_phone}")
 
     context.bot.send_message(update.effective_chat.id, confirmation_message)
     return ConversationHandler.END
+
 
 def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
