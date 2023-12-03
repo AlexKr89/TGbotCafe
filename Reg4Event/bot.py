@@ -53,6 +53,7 @@ def confirmation(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
 
     if user_choice == 'yes':
+        context.user_data['callback_query'] = update.callback_query
         update.message.reply_text("Для успешной записи, введите ваше ФИО")
         return USER_NAME
     else:
@@ -71,12 +72,9 @@ def user_info(update: Update, context: CallbackContext) -> int:
     # Сохраняем данные о регистрации в базу данных
     registration_db.save_registration(event[0], user_info)
 
-    if 'callback_query' in context.user_data and context.user_data['callback_query']:
-        query = context.user_data['callback_query']
-        if query.message:
-            query.edit_message_text(confirmation_message)
-        else:
-            update.message.reply_text(confirmation_message)
+    callback_query = context.user_data.get('callback_query')
+    if callback_query and callback_query.message:
+        callback_query.edit_message_text(confirmation_message)
     else:
         update.message.reply_text(confirmation_message)
 
@@ -85,7 +83,7 @@ def user_info(update: Update, context: CallbackContext) -> int:
 def enter_name(update: Update, context: CallbackContext) -> int:
     context.user_data['user_name'] = update.message.text
     event = db.get_events()[context.user_data['selected_event']]
-    query = update.callback_query
+    query = context.user_data.get('callback_query')
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
     confirmation_message = f"Вы хотите записаться на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}?\n\nВаше ФИО: {context.user_data['user_name']}"
@@ -94,13 +92,17 @@ def enter_name(update: Update, context: CallbackContext) -> int:
                  InlineKeyboardButton("Нет", callback_data='no')]]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    query.edit_message_text(confirmation_message, reply_markup=reply_markup)
+    if query and query.message:
+        query.edit_message_text(confirmation_message, reply_markup=reply_markup)
+    else:
+        update.message.reply_text(confirmation_message, reply_markup=reply_markup)
+
     return USER_PHONE
 
 def enter_phone(update: Update, context: CallbackContext) -> int:
     context.user_data['user_phone'] = update.message.text
     event = db.get_events()[context.user_data['selected_event']]
-    query = update.callback_query
+    query = context.user_data.get('callback_query')
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = datetime.combine(datetime.today(), event[2]).strftime("%H:%M")
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_name']}\nКонтактный телефон: {context.user_data['user_phone']}"
@@ -108,7 +110,12 @@ def enter_phone(update: Update, context: CallbackContext) -> int:
     # Сохраняем данные о регистрации в базу данных
     registration_db.save_registration(event[0], f"{context.user_data['user_name']}, {context.user_data['user_phone']}")
 
-    query.edit_message_text(confirmation_message)
+    callback_query = context.user_data.get('callback_query')
+    if callback_query and callback_query.message:
+        callback_query.edit_message_text(confirmation_message)
+    else:
+        update.message.reply_text(confirmation_message)
+
     return ConversationHandler.END
 
 def test_registration(update: Update, context: CallbackContext) -> None:
