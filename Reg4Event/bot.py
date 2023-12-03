@@ -66,16 +66,6 @@ def user_info(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
 
-def test_registration(update: Update, context: CallbackContext) -> None:
-    # Эта функция предназначена только для тестирования процесса регистрации
-    event_name = "Танцы"  # Замените на реальное имя события
-    user_info = "Пупа Лупа, 89182547412"  # Замените на реальную информацию о пользователе
-
-    # Сохраняем регистрацию
-    registration_db.save_registration(event_name, user_info)
-
-    update.message.reply_text("Тестирование регистрации завершено!")
-
 def main():
     updater = Updater(TOKEN)
     dp = updater.dispatcher
@@ -92,9 +82,6 @@ def main():
     )
 
     dp.add_handler(conv_handler)
-
-    # Добавляем обработчик команды для тестирования регистрации
-    dp.add_handler(CommandHandler('test_registration', test_registration))
 
     updater.start_polling()
     updater.idle()
