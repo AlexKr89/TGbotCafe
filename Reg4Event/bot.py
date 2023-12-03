@@ -1,11 +1,13 @@
-from datetime import datetime, time
+# bot.py
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 from config import TOKEN
-from database import Database
+from database import Database, RegistrationDatabase
 
-# Загружаем токен и создаем экземпляр Database
+# Загружаем токен и создаем экземпляры Database и RegistrationDatabase
 db = Database('events.xlsx')
+reg_db = RegistrationDatabase('registrations.xlsx')
 
 SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 
@@ -58,6 +60,9 @@ def user_info(update: Update, context: CallbackContext) -> int:
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
+
+    # Сохраняем данные о регистрации в базу данных
+    reg_db.save_registration(event[0], user_info)
 
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
