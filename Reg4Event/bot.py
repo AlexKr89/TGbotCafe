@@ -97,3 +97,7 @@ def main():
     dp.add_handler(CommandHandler('test_registration', test_registration))
 
     updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
