@@ -57,7 +57,7 @@ def user_info(update: Update, context: CallbackContext) -> int:
 
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
-    formatted_time = event[2].strftime("%H:%M")
+    formatted_time = datetime.combine(datetime.today(), event[2]).strftime("%H:%M")
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
 
     # Сохраняем данные о регистрации в базу данных
