@@ -45,10 +45,11 @@ def confirmation(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
 
     if user_choice == 'yes':
-        query.edit_message_text("Для успешной записи, введите следующие данные:\nФИО")
-        return USER_INFO
+        query.edit_message_text("Для успешной записи, введите номер телефона для обратной связи")
+        return USER_PHONE
     else:
-        query.edit_message_text("Вы отменили запись на мероприятие.")
+        confirmation_message = "Вы успешно отменили запись на мероприятие."
+        query.edit_message_text(confirmation_message)
         return ConversationHandler.END
 
 def enter_phone(update: Update, context: CallbackContext) -> int:
@@ -71,14 +72,14 @@ def user_info(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}\n\nВведите Номер телефона для обратной связи"
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}\n\nЖелаете указать номер телефона для обратной связи?"
 
     keyboard = [[InlineKeyboardButton("Да", callback_data='yes'),
                  InlineKeyboardButton("Нет", callback_data='no')]]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text(confirmation_message, reply_markup=reply_markup)
-    return USER_PHONE
+    return CONFIRMATION
 
 def test_registration(update: Update, context: CallbackContext) -> None:
     # Эта функция предназначена только для тестирования процесса регистрации
