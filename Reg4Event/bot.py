@@ -8,7 +8,7 @@ from database import Database, RegistrationDatabase
 db = Database('events.xlsx')
 registration_db = RegistrationDatabase('registrations.xlsx')
 
-SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
+SELECT_EVENT, CONFIRMATION, USER_INFO, USER_PHONE = range(4)
 
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
@@ -45,11 +45,24 @@ def confirmation(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
 
     if user_choice == 'yes':
-        query.edit_message_text("Для успешной записи, введите следующие данные:\nФИО, Контактный телефон")
+        query.edit_message_text("Для успешной записи, введите следующие данные:\nФИО")
         return USER_INFO
     else:
         query.edit_message_text("Вы отменили запись на мероприятие.")
         return ConversationHandler.END
+
+def enter_phone(update: Update, context: CallbackContext) -> int:
+    context.user_data['user_phone'] = update.message.text
+    event = db.get_events()[context.user_data['selected_event']]
+    formatted_date = event[1].strftime("%d.%m.%Y")
+    formatted_time = event[2].strftime("%H:%M")
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_info']}\nНомер телефона: {context.user_data['user_phone']}"
+
+    # Сохраняем данные о регистрации в базу данных
+    registration_db.save_registration(event[0], f"{context.user_data['user_info']}, {context.user_data['user_phone']}")
+
+    context.bot.send_message(update.effective_chat.id, confirmation_message)
+    return ConversationHandler.END
 
 def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
@@ -85,7 +98,8 @@ def main():
         states={
             SELECT_EVENT: [CallbackQueryHandler(select_event)],
             CONFIRMATION: [CallbackQueryHandler(confirmation)],
-            USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)]
+            USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)],
+            USER_PHONE: [MessageHandler(Filters.text & ~Filters.command, enter_phone)]
         },
         fallbacks=[],
         allow_reentry=True
