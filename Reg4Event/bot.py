@@ -1,13 +1,12 @@
 # bot.py
-from datetime import datetime
+from datetime import datetime, time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackContext, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 from config import TOKEN
 from database import Database, RegistrationDatabase
 
-# Загружаем токен и создаем экземпляры Database и RegistrationDatabase
 db = Database('events.xlsx')
-reg_db = RegistrationDatabase('registrations.xlsx')
+registration_db = RegistrationDatabase('registrations.xlsx')
 
 SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
 
@@ -62,10 +61,20 @@ def user_info(update: Update, context: CallbackContext) -> int:
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
 
     # Сохраняем данные о регистрации в базу данных
-    reg_db.save_registration(event[0], user_info)
+    registration_db.save_registration(event[0], user_info)
 
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
+
+def test_registration(update: Update, context: CallbackContext) -> None:
+    # Эта функция предназначена только для тестирования процесса регистрации
+    event_name = "YourEventName"  # Замените на реальное имя события
+    user_info = "John Doe, 123-456-7890"  # Замените на реальную информацию о пользователе
+
+    # Сохраняем регистрацию
+    registration_db.save_registration(event_name, user_info)
+
+    update.message.reply_text("Тестирование регистрации завершено!")
 
 def main():
     updater = Updater(TOKEN)
@@ -84,8 +93,7 @@ def main():
 
     dp.add_handler(conv_handler)
 
-    updater.start_polling()
-    updater.idle()
+    # Добавляем обработчик команды для тестирования регистрации
+    dp.add_handler(CommandHandler('test_registration', test_registration))
 
-if __name__ == '__main__':
-    main()
+    updater.start_polling()
