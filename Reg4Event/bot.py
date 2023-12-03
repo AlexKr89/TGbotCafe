@@ -67,6 +67,7 @@ def enter_phone(update: Update, context: CallbackContext) -> int:
 def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
+    user_phone = context.user_data.get('user_phone', '')  # Получаем номер телефона из данных пользователя
 
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
@@ -74,7 +75,7 @@ def user_info(update: Update, context: CallbackContext) -> int:
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
 
     # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], user_info)
+    registration_db.save_registration(event[0], user_info, user_phone)  # Передаем user_phone
 
     update.message.reply_text(confirmation_message)
     return ConversationHandler.END
