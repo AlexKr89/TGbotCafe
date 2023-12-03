@@ -9,6 +9,7 @@ db = Database('events.xlsx')
 registration_db = RegistrationDatabase('registrations.xlsx')
 
 SELECT_EVENT, CONFIRMATION, USER_INFO = range(3)
+USER_PHONE = range(3, 5)
 
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
@@ -54,35 +55,29 @@ def confirmation(update: Update, context: CallbackContext) -> int:
 def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
-
-    event = db.get_events()[context.user_data['selected_event']]
-    formatted_date = event[1].strftime("%d.%m.%Y")
-    formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
-
-    # Сохраняем данные о регистрации в базу данных
-    user_phone = context.user_data.get('user_phone', 'Номер телефона не указан')
-    registration_db.save_registration(event[0], user_info, user_phone)
-
-    update.message.reply_text(confirmation_message)
-    return ConversationHandler.END
+    
+    # Просим ввести номер телефона
+    update.message.reply_text("Введите номер телефона для обратной связи:")
+    
+    return USER_PHONE
 
 def continue_registration(update: Update, context: CallbackContext) -> int:
-    # Обрабатываем ввод номера телефона
+    update.message.reply_text("Для успешной записи, введите следующие данные:\nФИО")
+    return USER_INFO
+
+def enter_phone(update: Update, context: CallbackContext) -> int:
     user_phone = update.message.text
     context.user_data['user_phone'] = user_phone
 
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
-    
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_info']}\nНомер телефона: {user_phone}"
+
     # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], context.user_data['user_info'], context.user_data['user_phone'])
+    registration_db.save_registration(event[0], context.user_data['user_info'], user_phone)
 
-    # Отправляем подтверждение
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_info']}\nНомер телефона: {context.user_data['user_phone']}"
     update.message.reply_text(confirmation_message)
-
     return ConversationHandler.END
 
 def main():
@@ -94,9 +89,11 @@ def main():
         states={
             SELECT_EVENT: [CallbackQueryHandler(select_event)],
             CONFIRMATION: [CallbackQueryHandler(confirmation)],
-            USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)]
+            USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)],
+            USER_PHONE: [MessageHandler(Filters.text & ~Filters.command, enter_phone)]
         },
-        fallbacks=[]
+        fallbacks=[],
+        allow_reentry=True
     )
 
     dp.add_handler(conv_handler)
