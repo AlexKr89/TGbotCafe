@@ -58,11 +58,14 @@ def user_info(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
 
-    # После ввода ФИО, спрашиваем номер телефона
-    query = update.message.reply_text("Введите телефон для обратной связи.")
-    context.user_data['asking_phone'] = True  # Добавляем флаг, что мы спрашиваем номер телефона
-    return USER_INFO
+    # Сохраняем данные о регистрации в базу данных
+    user_phone = context.user_data.get('user_phone', 'Номер телефона не указан')
+    registration_db.save_registration(event[0], user_info, user_phone)
+
+    update.message.reply_text(confirmation_message)
+    return ConversationHandler.END
 
 def continue_registration(update: Update, context: CallbackContext) -> int:
     # Обрабатываем ввод номера телефона
@@ -91,14 +94,11 @@ def main():
         states={
             SELECT_EVENT: [CallbackQueryHandler(select_event)],
             CONFIRMATION: [CallbackQueryHandler(confirmation)],
-            USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)],
+            USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)]
         },
-        fallbacks=[]  # Убираем fallbacks из ConversationHandler
+        fallbacks=[]
     )
 
-    # Добавляем отдельный обработчик для продолжения после ввода телефона
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command & Filters.regex(r'^\d{11}$'), continue_registration))
-    
     dp.add_handler(conv_handler)
 
     updater.start_polling()
