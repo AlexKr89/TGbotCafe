@@ -10,6 +10,10 @@ registration_db = RegistrationDatabase('registrations.xlsx')
 
 SELECT_EVENT, CONFIRMATION, USER_INFO, USER_PHONE = range(4)
 
+# Глобальные переменные для хранения временных данных
+temp_user_info = ''
+temp_user_phone = ''
+
 def start(update: Update, context: CallbackContext) -> int:
     events = db.get_events()
     message = "Доступные мероприятия:\n"
@@ -45,52 +49,51 @@ def confirmation(update: Update, context: CallbackContext) -> int:
     event = db.get_events()[context.user_data['selected_event']]
 
     if user_choice == 'yes':
-        query.edit_message_text("Для успешной записи, введите номер телефона для обратной связи")
-        return USER_PHONE
+        query.edit_message_text("Для успешной записи, введите следующие данные:\nФИО")
+        return USER_INFO
     else:
-        confirmation_message = "Вы успешно отменили запись на мероприятие."
-        query.edit_message_text(confirmation_message)
+        query.edit_message_text("Вы отменили запись на мероприятие.")
         return ConversationHandler.END
 
 def enter_phone(update: Update, context: CallbackContext) -> int:
-    user_info = context.user_data.get('user_info', '')  # Получаем ФИО из данных пользователя
-    user_phone = update.message.text
-    context.user_data['user_phone'] = user_phone
+    global temp_user_phone
+    temp_user_phone = update.message.text
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {user_info}\nНомер телефона: {user_phone}"
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {temp_user_info}\nНомер телефона: {temp_user_phone}"
 
     # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], f"{user_info}, {user_phone}")
+    registration_db.save_registration(event[0], f"{temp_user_info}, {temp_user_phone}")
 
     context.bot.send_message(update.effective_chat.id, confirmation_message)
     return ConversationHandler.END
 
-
 def user_info(update: Update, context: CallbackContext) -> int:
-    user_info = update.message.text
-    context.user_data['user_info'] = user_info
-
+    global temp_user_info
+    temp_user_info = update.message.text
+    temp_user_phone = ''  # Сбрасываем временное значение для номера телефона, чтобы избежать ошибки
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}\n\nЖелаете указать номер телефона для обратной связи?"
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{temp_user_info}"
 
-    keyboard = [[InlineKeyboardButton("Да", callback_data='yes'),
-                 InlineKeyboardButton("Нет", callback_data='no')]]
+    query = update.callback_query
+    if query:
+        query.edit_message_text(confirmation_message)
+    else:
+        update.message.reply_text(confirmation_message)
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(confirmation_message, reply_markup=reply_markup)
-    return CONFIRMATION
+    return USER_PHONE
 
 def test_registration(update: Update, context: CallbackContext) -> None:
     # Эта функция предназначена только для тестирования процесса регистрации
     event_name = "Танцы"  # Замените на реальное имя события
-    user_info = "Пупа Лупа, 89182547412"  # Замените на реальную информацию о пользователе
+    user_info = "Пупа Лупа"  # Замените на реальную информацию о пользователе
+    user_phone = "89182547412"  # Замените на реальный номер телефона
 
     # Сохраняем регистрацию
-    registration_db.save_registration(event_name, user_info)
+    registration_db.save_registration(event_name, f"{user_info}, {user_phone}")
 
     update.message.reply_text("Тестирование регистрации завершено!")
 
