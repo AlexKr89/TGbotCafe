@@ -59,14 +59,6 @@ def confirmation(update: Update, context: CallbackContext) -> int:
         update.message.reply_text("Вы отменили запись на мероприятие.")
         return ConversationHandler.END
 
-
-    if user_choice == 'yes':
-        update.message.reply_text("Для успешной записи, введите следующие данные:\nФИО, Контактный телефон")
-        return USER_INFO
-    else:
-        update.message.reply_text("Вы отменили запись на мероприятие.")
-        return ConversationHandler.END
-
 def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
