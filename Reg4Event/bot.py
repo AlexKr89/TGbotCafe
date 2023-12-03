@@ -69,7 +69,7 @@ def user_info(update: Update, context: CallbackContext) -> int:
 def test_registration(update: Update, context: CallbackContext) -> None:
     # Эта функция предназначена только для тестирования процесса регистрации
     event_name = "Танцы"  # Замените на реальное имя события
-    user_info = "Вася Пупкин, 89182547412"  # Замените на реальную информацию о пользователе
+    user_info = "Пупа Лупа, 89182547412"  # Замените на реальную информацию о пользователе
 
     # Сохраняем регистрацию
     registration_db.save_registration(event_name, user_info)
