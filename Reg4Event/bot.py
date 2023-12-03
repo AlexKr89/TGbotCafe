@@ -67,18 +67,18 @@ def enter_phone(update: Update, context: CallbackContext) -> int:
 def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
-    user_phone = context.user_data.get('user_phone', '')  # Получаем номер телефона из данных пользователя
 
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
     formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
+    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}\n\nВведите Номер телефона для обратной связи"
 
-    # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], user_info, user_phone)  # Передаем user_phone
+    keyboard = [[InlineKeyboardButton("Да", callback_data='yes'),
+                 InlineKeyboardButton("Нет", callback_data='no')]]
 
-    update.message.reply_text(confirmation_message)
-    return ConversationHandler.END
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(confirmation_message, reply_markup=reply_markup)
+    return USER_PHONE
 
 def test_registration(update: Update, context: CallbackContext) -> None:
     # Эта функция предназначена только для тестирования процесса регистрации
