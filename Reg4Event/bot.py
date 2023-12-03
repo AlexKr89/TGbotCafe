@@ -53,22 +53,29 @@ def confirmation(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
 def enter_phone(update: Update, context: CallbackContext) -> int:
-    context.user_data['user_phone'] = update.message.text
-    event = db.get_events()[context.user_data['selected_event']]
-    formatted_date = event[1].strftime("%d.%m.%Y")
-    formatted_time = event[2].strftime("%H:%M")
-    confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_info']}\nНомер телефона: {context.user_data['user_phone']}"
+    # Обработка ввода номера телефона
+    if update.message:
+        context.user_data['user_phone'] = update.message.text
+        event = db.get_events()[context.user_data['selected_event']]
+        formatted_date = event[1].strftime("%d.%m.%Y")
+        formatted_time = event[2].strftime("%H:%M")
+        confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data.get('user_info', '')}\nНомер телефона: {context.user_data.get('user_phone', '')}"
 
-    # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], f"{context.user_data['user_info']}, {context.user_data['user_phone']}")
+        # Сохраняем данные о регистрации в базу данных
+        registration_db.save_registration(event[0], f"{context.user_data.get('user_info', '')}, {context.user_data.get('user_phone', '')}")
 
-    context.bot.send_message(update.effective_chat.id, confirmation_message)
-    return ConversationHandler.END
+        context.bot.send_message(update.effective_chat.id, confirmation_message)
+        return ConversationHandler.END
+    else:
+        # Если update.message - None, значит, пришел callback_query
+        query = update.callback_query
+        query.answer()
+        return USER_PHONE
 
 def user_info(update: Update, context: CallbackContext) -> int:
+    # Обработка ввода ФИО
     user_info = update.message.text
     context.user_data['user_info'] = user_info
-    user_phone = context.user_data.get('user_phone', '')  # Получаем номер телефона из данных пользователя
 
     event = db.get_events()[context.user_data['selected_event']]
     formatted_date = event[1].strftime("%d.%m.%Y")
@@ -76,9 +83,9 @@ def user_info(update: Update, context: CallbackContext) -> int:
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\n{user_info}"
 
     # Сохраняем данные о регистрации в базу данных
-    registration_db.save_registration(event[0], user_info, user_phone)  # Передаем user_phone
+    registration_db.save_registration(event[0], user_info)
 
-    # Теперь предложим ввести номер телефона
+    # Предложим ввести номер телефона
     keyboard = [[InlineKeyboardButton("Продолжить", callback_data='continue')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text("Введите номер телефона для обратной связи", reply_markup=reply_markup)
@@ -86,8 +93,18 @@ def user_info(update: Update, context: CallbackContext) -> int:
     return USER_PHONE
 
 def continue_registration(update: Update, context: CallbackContext) -> int:
-    # Продолжаем обработку нажатия кнопки "Продолжить" в состоянии USER_PHONE
+    # Продолжение ввода номера телефона
     return enter_phone(update, context)
+
+def test_registration(update: Update, context: CallbackContext) -> None:
+    # Эта функция предназначена только для тестирования процесса регистрации
+    event_name = "Танцы"  # Замените на реальное имя события
+    user_info = "Пупа Лупа, 89182547412"  # Замените на реальную информацию о пользователе
+
+    # Сохраняем регистрацию
+    registration_db.save_registration(event_name, user_info)
+
+    update.message.reply_text("Тестирование регистрации завершено!")
 
 def main():
     updater = Updater(TOKEN)
@@ -99,15 +116,16 @@ def main():
             SELECT_EVENT: [CallbackQueryHandler(select_event)],
             CONFIRMATION: [CallbackQueryHandler(confirmation)],
             USER_INFO: [MessageHandler(Filters.text & ~Filters.command, user_info)],
-            USER_PHONE: [
-                CallbackQueryHandler(continue_registration)  # Добавляем новый CallbackQueryHandler
-            ]
+            USER_PHONE: [CallbackQueryHandler(continue_registration)]
         },
         fallbacks=[],
         allow_reentry=True
     )
 
     dp.add_handler(conv_handler)
+
+    # Добавляем обработчик команды для тестирования регистрации
+    dp.add_handler(CommandHandler('test_registration', test_registration))
 
     updater.start_polling()
     updater.idle()
