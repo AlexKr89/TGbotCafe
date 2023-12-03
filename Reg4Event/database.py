@@ -21,13 +21,9 @@ class RegistrationDatabase:
         wb = openpyxl.load_workbook(self.filename)
         sheet = wb.active
 
-        # Find the row where the event_name matches
-        for row in sheet.iter_rows(min_row=2, max_col=1, max_row=sheet.max_row, values_only=True):
-            if row[0] == event_name:
-                # Append user_info and current timestamp to the row
-                registration_data = [user_info, datetime.now()]
-                sheet.append([event_name, *registration_data])
-                break
+        # Добавляем user_info и текущую метку времени в строку
+        registration_data = [user_info, datetime.now()]
+        sheet.append([event_name, *registration_data])
 
         wb.save(self.filename)
         wb.close()
