@@ -1,4 +1,3 @@
-# database.py
 import openpyxl
 from datetime import datetime
 
@@ -21,7 +20,6 @@ class RegistrationDatabase:
         wb = openpyxl.load_workbook(self.filename)
         sheet = wb.active
 
-        # Добавляем user_info, user_phone и текущую метку времени в строку
         registration_data = [user_info, user_phone, datetime.now()]
         sheet.append([event_name, *registration_data])
 
