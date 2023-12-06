@@ -54,7 +54,6 @@ def user_info(update: Update, context: CallbackContext) -> int:
     user_info = update.message.text
     context.user_data['user_info'] = user_info
     
-    # Просим ввести номер телефона
     update.message.reply_text("Введите номер телефона для обратной связи:")
     
     return USER_PHONE
@@ -72,7 +71,6 @@ def enter_phone(update: Update, context: CallbackContext) -> int:
     formatted_time = event[2].strftime("%H:%M")
     confirmation_message = f"Вы успешно записаны на мероприятие:\n{event[0]} - {formatted_date} {formatted_time}\n\nВаши данные:\nФИО: {context.user_data['user_info']}\nНомер телефона: {user_phone}"
 
-    # Сохраняем данные о регистрации в базу данных
     registration_db.save_registration(event[0], context.user_data['user_info'], user_phone)
 
     update.message.reply_text(confirmation_message)
